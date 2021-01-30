@@ -8,6 +8,7 @@ from utils.audio import Audio
 from utils.hparams import HParam
 from model.model import VoiceFilter
 from model.embedder import SpeechEmbedder
+from IPython.display import Audio as dispAudio, display
 
 
 def main(args, hp):
@@ -46,7 +47,19 @@ def main(args, hp):
         os.makedirs(args.out_dir, exist_ok=True)
         out_path = os.path.join(args.out_dir, 'result.wav')
         librosa.output.write_wav(out_path, inv_wav, sr=16000)
-
+        
+        # show in notebook results
+        print('-'*100)
+        print('-'*30,os.path.basename(noise_utterance),'-'*30)
+        print("Input/Noise Audio")
+        display(dispAudio(mixed_wav,rate=16000))
+        print('Input/reference Audio')
+        display(dispAudio(dvec_wav,rate=16000))
+        print('Test taker\'s voice')
+        display(dispAudio(est_wav,rate=16000))
+        print('Environment Audio')
+        display(dispAudio(inv_wav,rate=16000))
+        
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
