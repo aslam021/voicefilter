@@ -40,9 +40,12 @@ def main(args, hp):
         est_mag = est_mag[0].cpu().detach().numpy()
         est_wav = audio.spec2wav(est_mag, phase)
 
+        #getting the environment noise
+        inv_wav = mixed_wav - est_wav
+        
         os.makedirs(args.out_dir, exist_ok=True)
         out_path = os.path.join(args.out_dir, 'result.wav')
-        librosa.output.write_wav(out_path, est_wav, sr=16000)
+        librosa.output.write_wav(out_path, inv_wav, sr=16000)
 
 
 if __name__ == '__main__':
