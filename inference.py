@@ -50,7 +50,7 @@ def main(args, hp):
         
         # show in notebook results
         print('-'*100)
-        print('-'*30,os.path.basename(noise_utterance),'-'*30)
+        print('-'*30,os.path.basename(args.mixed_file),'-'*30)
         print("Input/Noise Audio")
         display(dispAudio(mixed_wav,rate=16000))
         print('Input/reference Audio')
