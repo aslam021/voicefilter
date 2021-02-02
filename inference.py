@@ -3,12 +3,13 @@ import glob
 import torch
 import librosa
 import argparse
+import numpy as np
+import soundfile as sf
 
 from utils.audio import Audio
 from utils.hparams import HParam
 from model.model import VoiceFilter
 from model.embedder import SpeechEmbedder
-from IPython.display import Audio as dispAudio, display
 
 
 def main(args, hp):
@@ -31,6 +32,7 @@ def main(args, hp):
         dvec = dvec.unsqueeze(0)
 
         mixed_wav, _ = librosa.load(args.mixed_file, sr=16000)
+        
         mag, phase = audio.wav2spec(mixed_wav)
         mag = torch.from_numpy(mag).float().cuda()
 
@@ -40,26 +42,34 @@ def main(args, hp):
 
         est_mag = est_mag[0].cpu().detach().numpy()
         est_wav = audio.spec2wav(est_mag, phase)
-
-        #getting the environment noise
+        
+        # if mixed is biggest than estimation wav we need pad with zeros because is expected that this part is silence
+        len_est = len(est_wav)
+        len_mixed = len(mixed_wav)
+        if len_est < len_mixed:
+            est_wav = np.pad(est_wav, (0, len(mixed_wav)-len(est_wav)), 'constant', constant_values=(0, 0))
+        
+        #to get inverse
         inv_wav = mixed_wav - est_wav
         
         os.makedirs(args.out_dir, exist_ok=True)
-        out_path = os.path.join(args.out_dir, 'result.wav')
-        librosa.output.write_wav(out_path, inv_wav, sr=16000)
         
-        # show in notebook results
-        print('-'*100)
-        print('-'*30,os.path.basename(args.mixed_file),'-'*30)
-        print("Input/Noise Audio")
-        display(dispAudio(mixed_wav,rate=16000))
-        print('Input/reference Audio')
-        display(dispAudio(dvec_wav,rate=16000))
-        print('Test taker\'s voice')
-        display(dispAudio(est_wav,rate=16000))
-        print('Environment Audio')
-        display(dispAudio(inv_wav,rate=16000))
+        out_path = os.path.join(args.out_dir, 'mixed.wav')
+        # librosa.output.write_wav(out_path, mixed_wav, sr=16000)
+        sf.write(out_path, inv_wav, 16000, 'PCM_24')
         
+        out_path = os.path.join(args.out_dir, 'reference.wav')
+        # librosa.output.write_wav(out_path, dvec_wav, sr=16000)
+        sf.write(out_path, dvec_wav, 16000, 'PCM_24')
+        
+        out_path = os.path.join(args.out_dir, 'test_takers.wav')
+        # librosa.output.write_wav(out_path, est_wav, sr=16000)
+        sf.write(out_path, est_wav, 16000, 'PCM_24')
+        
+        out_path = os.path.join(args.out_dir, 'environment.wav')
+        # librosa.output.write_wav(out_path, inv_wav, sr=16000)
+        sf.write(out_path, inv_wav, 16000, 'PCM_24')
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
